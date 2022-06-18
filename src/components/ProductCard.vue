@@ -1,26 +1,21 @@
 <template>
   <div
     class="card"
-    @mouseleave="isMouseLeave"
+    @mouseleave="unhoverEvent(card)"
     v-for="(card, id) in cards"
     :key="id"
     :class="{
       active: isActive(card),
       disabled: card.available === false,
-      unhover: isActive(card) && approve === false,
+      unhover: this.isUnhover[card.id - 1],
     }"
   >
     <div class="card__cover" @click="chooseCard(card)">
       <div class="card__corner"></div>
-
-      <span
-        v-if="isActive(card) && approve === false"
-        class="card__description"
-      >
+      <span v-if="this.isUnhover[card.id - 1]" class="card__description">
         Котэ не одобряет?
       </span>
       <span v-else class="card__description">Cказачное заморское яство</span>
-
       <h2 class="card__title">Нямушка</h2>
       <span class="card__sort">{{ card.sort }}</span>
       <ul class="card__list">
@@ -30,16 +25,14 @@
       </ul>
       <img class="card__image" src="@/assets/cat.png" alt="cat" />
       <div class="card__circle">
-        <div class="card__weight">
-          <div class="card__weight-num">
-            {{ card.weight }}
-          </div>
-          <div class="card__weight-messure">кг</div>
+        <div class="card__circle-num">
+          {{ card.weight }}
         </div>
+        <div class="card__circle-messure">кг</div>
       </div>
     </div>
 
-    <div v-if="isActive(card) && card.available" class="card__footer">
+    <div v-if="isActive(card)" class="card__footer">
       {{ card.sklad }}
     </div>
 
@@ -68,8 +61,12 @@ export default {
   data() {
     return {
       cart: [],
-      approve: true,
+      isUnhover: [],
     };
+  },
+
+  created() {
+    this.checkCondition;
   },
 
   methods: {
@@ -77,11 +74,11 @@ export default {
       if (card.available === false) {
         return;
       }
-      if (this.cart.find((i) => i === card)) {
+      if (this.isActive(card)) {
         this.cart = this.cart.filter((el) => el != card);
+        this.isUnhover[card.id - 1] = false;
       } else {
         this.cart.push(card);
-        this.approve = true;
       }
     },
 
@@ -91,18 +88,27 @@ export default {
       }
     },
 
-    isMouseLeave(e) {
-      if (this.isActive && e !== ".card") {
-        this.approve = false;
-      } else {
-        return;
+    unhoverEvent(card) {
+      if (this.isActive(card)) {
+        this.isUnhover[card.id - 1] = true;
       }
+    },
+  },
+
+  computed: {
+    checkCondition() {
+      for (let i = 0; i < this.cards.length; i++) {
+        this.isUnhover.push(false);
+      }
+      return this.isUnhover;
     },
   },
 };
 </script>
 
 <style lang="sass" scoped>
+
+// Card is active
 
 .active .card__cover
 	border: 4px solid $pink
@@ -113,8 +119,12 @@ export default {
 .active .card__corner
 	border-top: 42px solid $pink
 
+// Card is unhover
+
 .unhover .card__description
 	color: $pink
+
+// Card is disabled
 
 .disabled	.card__cover
 	cursor: default
@@ -137,6 +147,8 @@ export default {
 	color: $gray
 	opacity: 0.5
 
+
+// Main styles
 
 .card
 	width: 320px
@@ -165,7 +177,7 @@ export default {
 		left: 0
 		width: 0
 		height: 0
-		border-top: 42px solid $blue 
+		border-top: 42px solid $blue
 		border-right: 42px solid transparent
 
 	&__description
@@ -209,6 +221,7 @@ export default {
 		display: flex
 		justify-content: center
 		align-items: center
+		flex-direction: column
 		text-align: center
 		width: 80px
 		height: 80px
@@ -219,8 +232,6 @@ export default {
 		line-height: 22px
 		bottom: 16px
 		right: 16px
-
-	&__weight
 
 		&-num
 			display: flex
