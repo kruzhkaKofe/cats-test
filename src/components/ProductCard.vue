@@ -7,12 +7,12 @@
     :class="{
       active: isActive(card),
       disabled: card.available === false,
-      unhover: this.isUnhover[card.id - 1],
+      unhover: isUnhover[card.id - 1],
     }"
   >
     <div class="card__cover" @click="chooseCard(card)">
       <div class="card__corner"></div>
-      <span v-if="this.isUnhover[card.id - 1]" class="card__description">
+      <span v-if="isUnhover[card.id - 1]" class="card__description">
         Котэ не одобряет?
       </span>
       <span v-else class="card__description">Cказачное заморское яство</span>
@@ -50,6 +50,8 @@
 </template>
 
 <script>
+import { ref, computed, onMounted } from "vue";
+
 export default {
   props: {
     cards: {
@@ -58,50 +60,47 @@ export default {
     },
   },
 
-  data() {
-    return {
-      cart: [],
-      isUnhover: [],
+  setup(props) {
+    const cart = ref([]);
+    const isUnhover = ref([]);
+
+    const isActive = (card) => {
+      if (cart.value.find((i) => i === card)) {
+        return true;
+      }
     };
-  },
 
-  created() {
-    this.checkCondition;
-  },
-
-  methods: {
-    chooseCard(card) {
+    const chooseCard = (card) => {
       if (card.available === false) {
         return;
       }
-      if (this.isActive(card)) {
-        this.cart = this.cart.filter((el) => el != card);
-        this.isUnhover[card.id - 1] = false;
+      if (isActive(card)) {
+        cart.value = cart.value.filter((el) => el != card);
+        isUnhover.value[card.id - 1] = false;
       } else {
-        this.cart.push(card);
+        cart.value.push(card);
       }
-    },
+    };
 
-    isActive(card) {
-      if (this.cart.find((i) => i === card)) {
-        return true;
+    const unhoverEvent = (card) => {
+      if (isActive(card)) {
+        isUnhover.value[card.id - 1] = true;
       }
-    },
+    };
 
-    unhoverEvent(card) {
-      if (this.isActive(card)) {
-        this.isUnhover[card.id - 1] = true;
+    const checkCondition = computed(() => {
+      for (let i = 0; i < props.cards.length; i++) {
+        isUnhover.value.push(false);
       }
-    },
-  },
+    });
 
-  computed: {
-    checkCondition() {
-      for (let i = 0; i < this.cards.length; i++) {
-        this.isUnhover.push(false);
-      }
-      return this.isUnhover;
-    },
+    return {
+      isActive,
+      chooseCard,
+      unhoverEvent,
+      isUnhover,
+      checkCondition,
+    };
   },
 };
 </script>
